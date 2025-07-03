@@ -20,15 +20,17 @@ public class JoinService {
 
     public void joinProcess(JoinDTO joinDTO) {
 
+        // 컨트롤러에서 name, password 받아오기
         String username = joinDTO.getUsername();
         String password = joinDTO.getPassword();
 
+        // name 중복이라면 프로세스 중단
         Boolean isExist = userRepository.existsByUsername(username);
-
         if (isExist) {
             return;
         }
 
+        // 패스워드는 암호화하고 role 추가해서 entity 형태로 repository.save()
         UserEntity data = new UserEntity();
 
         data.setUsername(username);

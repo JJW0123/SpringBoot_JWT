@@ -2,15 +2,34 @@ package com.example.demo.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.example.demo.jwt.LoginFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    // LoginFilter의 인자인 AuthenticationManager의 인자
+    private final AuthenticationConfiguration authenticationConfiguration;
+
+    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration) {
+        // SecurityConfig 생성자 주입
+        this.authenticationConfiguration = authenticationConfiguration;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        // LoginFilter 인자
+        return configuration.getAuthenticationManager();
+    }
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -33,6 +52,10 @@ public class SecurityConfig {
                 .requestMatchers("/", "/join").permitAll() // jwt 없이 접근가능
                 .requestMatchers("/admin").hasRole("ADMIN") // ADMIN만 "/admin"에 접근가능
                 .anyRequest().authenticated()); // 그외에는 jwt 있어야 접근가능
+
+        // UsernamePasswordAuthenticationFilter 필터 자리에 커스텀 필터 넣기
+        http.addFilterAt(new LoginFilter(authenticationManager(
+                authenticationConfiguration)), UsernamePasswordAuthenticationFilter.class);
 
         // 세션 설정(STATELESS)
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
