@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.example.demo.jwt.JWTFilter;
 import com.example.demo.jwt.JWTUtil;
 import com.example.demo.jwt.LoginFilter;
 
@@ -55,6 +56,9 @@ public class SecurityConfig {
                 .requestMatchers("/", "/join", "/login").permitAll() // jwt 없이 접근가능
                 .requestMatchers("/admin").hasRole("ADMIN") // ADMIN만 "/admin"에 접근가능
                 .anyRequest().authenticated()); // 그외에는 jwt 있어야 접근가능
+
+        // LoginFilter 앞에 JWTFilter 필터 넣기
+        http.addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
 
         // UsernamePasswordAuthenticationFilter 필터 자리에 커스텀 필터 넣기
         http.addFilterAt(new LoginFilter(authenticationManager(
