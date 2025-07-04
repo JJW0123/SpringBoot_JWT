@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.example.demo.jwt.JWTUtil;
 import com.example.demo.jwt.LoginFilter;
 
 @Configuration
@@ -19,10 +20,12 @@ public class SecurityConfig {
 
     // LoginFilter의 인자인 AuthenticationManager의 인자
     private final AuthenticationConfiguration authenticationConfiguration;
+    private final JWTUtil jwtUtil;
 
-    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration) {
+    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil) {
         // SecurityConfig 생성자 주입
         this.authenticationConfiguration = authenticationConfiguration;
+        this.jwtUtil = jwtUtil;
     }
 
     @Bean
@@ -55,7 +58,7 @@ public class SecurityConfig {
 
         // UsernamePasswordAuthenticationFilter 필터 자리에 커스텀 필터 넣기
         http.addFilterAt(new LoginFilter(authenticationManager(
-                authenticationConfiguration)), UsernamePasswordAuthenticationFilter.class);
+                authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
         // 세션 설정(STATELESS)
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

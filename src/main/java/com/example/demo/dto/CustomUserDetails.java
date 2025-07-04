@@ -26,7 +26,7 @@ public class CustomUserDetails implements UserDetails {
         collection.add(new GrantedAuthority() {
             @Override
             public String getAuthority() {
-                // 회원의 role 받아와서 collection에 추가
+                // 회원의 role 반환하는 함수
                 return userEntity.getRole();
             }
         });
