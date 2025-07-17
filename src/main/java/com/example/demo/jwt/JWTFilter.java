@@ -1,6 +1,7 @@
 package com.example.demo.jwt;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -10,6 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.example.demo.dto.CustomUserDetails;
 import com.example.demo.entity.UserEntity;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,26 +30,41 @@ public class JWTFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // request에서 Authorization 헤더 가져오기
-        String authorization = request.getHeader("Authorization");
+        // request에서 access token 가져오기
+        String token = request.getHeader("access");
 
-        // Authorization 헤더 검증
-        if (authorization == null || !authorization.startsWith("Bearer ")) {
-
-            System.out.println("token null");
+        // token 헤더 검증
+        if (token == null) {
             // 다음 필터로 전달
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 토큰 앞 Bearer 제거
-        String token = authorization.split(" ")[1];
+        // 토큰 만료 시간 검증
+        try {
+            jwtUtil.isExpired(token);
+        } catch (ExpiredJwtException e) {
 
-        // 토큰 소멸 시간 검증
-        if (jwtUtil.isExpired(token)) {
+            // response body
+            PrintWriter writer = response.getWriter();
+            writer.print("access token expired");
 
-            System.out.println("token expired");
-            filterChain.doFilter(request, response);
+            // reponse status 401
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        // access 토큰인지 검증
+        String category = jwtUtil.getCategory(token);
+
+        if (!category.equals("access")) {
+
+            // response body
+            PrintWriter writer = response.getWriter();
+            writer.print("invalid access token");
+
+            // response status code 401
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
@@ -58,7 +75,6 @@ public class JWTFilter extends OncePerRequestFilter {
         // userEntity를 생성하여 값 세팅
         UserEntity userEntity = new UserEntity();
         userEntity.setUsername(username);
-        userEntity.setPassword("temppassword");
         userEntity.setRole(role);
 
         // UserDetails에 회원 정보 객체 담기
@@ -67,6 +83,7 @@ public class JWTFilter extends OncePerRequestFilter {
         // 스프링 시큐리티 인증 토큰 생성
         Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null,
                 customUserDetails.getAuthorities());
+
         // 세션에 사용자 등록
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
