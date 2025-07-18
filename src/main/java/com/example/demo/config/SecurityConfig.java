@@ -53,7 +53,7 @@ public class SecurityConfig {
 
         // 경로별 인가 처리
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/join", "/login").permitAll() // jwt 없이 접근가능
+                .requestMatchers("/", "/join", "/login", "/reissue").permitAll() // jwt 없이 접근가능
                 .requestMatchers("/admin").hasRole("ADMIN") // ADMIN만 "/admin"에 접근가능
                 .anyRequest().authenticated()); // 그외에는 jwt 있어야 접근가능
 

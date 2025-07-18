@@ -33,9 +33,9 @@ public class JWTFilter extends OncePerRequestFilter {
         // request에서 access token 가져오기
         String token = request.getHeader("access");
 
-        // token 헤더 검증
+        // token 유무 검증
         if (token == null) {
-            // 다음 필터로 전달
+            // 다음 필터로 전달(권한이 필요없는 요청인 경우)
             filterChain.doFilter(request, response);
             return;
         }

@@ -1,6 +1,7 @@
 package com.example.demo.jwt;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -11,9 +12,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.util.StreamUtils;
+
+import com.example.demo.dto.JoinDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,9 +41,24 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException {
 
-        // request에서 username, password 받아오기
-        String username = obtainUsername(request);
-        String password = obtainPassword(request);
+        JoinDTO joinDTO = new JoinDTO();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // json -> java
+        try {
+            // request에서 json 데이터 받아오기
+            ServletInputStream inputStream = request.getInputStream();
+            // inputStream -> String
+            String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+            // dto 객체에 담기
+            joinDTO = objectMapper.readValue(messageBody, JoinDTO.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // dto에서 username, password 받아오기
+        String username = joinDTO.getUsername();
+        String password = joinDTO.getPassword();
 
         // 받아온 정보를 authenticationManager로 전달
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, password,
